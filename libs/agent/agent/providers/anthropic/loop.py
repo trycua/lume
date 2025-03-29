@@ -16,7 +16,7 @@ from datetime import datetime
 from computer import Computer
 
 # Base imports
-from ...core.loop import BaseLoop
+from ...core.base import BaseLoop
 from ...core.messages import StandardMessageManager, ImageRetentionConfig
 from ...core.types import AgentResponse
 

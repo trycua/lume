@@ -1,6 +1,6 @@
 """Core agent components."""
 
-from .loop import BaseLoop
+from .factory import BaseLoop
 from .messages import (
     BaseMessageManager,
     ImageRetentionConfig,

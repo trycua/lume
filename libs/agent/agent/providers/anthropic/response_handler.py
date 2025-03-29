@@ -1,14 +1,11 @@
 """Response and tool handling for Anthropic provider."""
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple, cast
+from typing import Any, Dict, List, Tuple, cast
 
 from anthropic.types.beta import (
     BetaMessage,
-    BetaMessageParam,
     BetaTextBlock,
-    BetaTextBlockParam,
-    BetaToolUseBlockParam,
     BetaContentBlockParam,
 )
 

@@ -9,7 +9,9 @@ class LLMProvider(StrEnum):
     """Supported LLM providers."""
 
     ANTHROPIC = "anthropic"
+    OMNI = "omni"
     OPENAI = "openai"
+
 
 @dataclass
 class LLM:

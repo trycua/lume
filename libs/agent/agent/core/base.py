@@ -1,34 +1,20 @@
-"""Base agent loop implementation."""
+"""Base loop definitions."""
 
 import logging
 import asyncio
 from abc import ABC, abstractmethod
-from enum import Enum, auto
-from typing import Any, AsyncGenerator, Dict, List, Optional, Tuple
-from datetime import datetime
+from typing import Any, AsyncGenerator, Dict, List, Optional
 
 from computer import Computer
-from .experiment import ExperimentManager
 from .messages import StandardMessageManager, ImageRetentionConfig
 from .types import AgentResponse
+from .experiment import ExperimentManager
 
 logger = logging.getLogger(__name__)
 
 
-class AgentLoop(Enum):
-    """Enumeration of available loop types."""
-
-    ANTHROPIC = auto()  # Anthropic implementation
-    OMNI = auto()  # OmniLoop implementation
-    # Add more loop types as needed
-
-
 class BaseLoop(ABC):
     """Base class for agent loops that handle message processing and tool execution."""
-
-    ###########################################
-    # INITIALIZATION AND CONFIGURATION
-    ###########################################
 
     def __init__(
         self,
@@ -67,6 +53,11 @@ class BaseLoop(ABC):
         self.save_trajectory = save_trajectory
         self.only_n_most_recent_images = only_n_most_recent_images
         self._kwargs = kwargs
+
+        # Initialize message manager
+        self.message_manager = StandardMessageManager(
+            config=ImageRetentionConfig(num_images_to_keep=only_n_most_recent_images)
+        )
 
         # Initialize experiment manager
         if self.save_trajectory and self.base_dir:
@@ -110,8 +101,7 @@ class BaseLoop(ABC):
                     )
                     raise RuntimeError(f"Failed to initialize: {str(e)}")
 
-        ###########################################
-
+    ###########################################
     # ABSTRACT METHODS TO BE IMPLEMENTED BY SUBCLASSES
     ###########################################
 
@@ -125,17 +115,14 @@ class BaseLoop(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def run(self, messages: List[Dict[str, Any]]) -> AsyncGenerator[AgentResponse, None]:
+    def run(self, messages: List[Dict[str, Any]]) -> AsyncGenerator[AgentResponse, None]:
         """Run the agent loop with provided messages.
-
-        This method handles the main agent loop including message processing,
-        API calls, response handling, and action execution.
 
         Args:
             messages: List of message objects
 
-        Yields:
-            Agent response format
+        Returns:
+            An async generator that yields agent responses
         """
         raise NotImplementedError
 

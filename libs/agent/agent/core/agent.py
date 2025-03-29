@@ -3,31 +3,17 @@
 import asyncio
 import logging
 import os
-from typing import Any, AsyncGenerator, Dict, Optional, cast, List
+from typing import AsyncGenerator, Optional
 
 from computer import Computer
-from ..providers.anthropic.loop import AnthropicLoop
-from ..providers.omni.loop import OmniLoop
-from ..providers.omni.parser import OmniParser
-from ..providers.omni.types import LLMProvider, LLM
+from ..providers.omni.types import LLM
 from .. import AgentLoop
-from .messages import StandardMessageManager, ImageRetentionConfig
 from .types import AgentResponse
+from .factory import LoopFactory
+from .provider_config import DEFAULT_MODELS, ENV_VARS
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Default models for different providers
-DEFAULT_MODELS = {
-    LLMProvider.OPENAI: "gpt-4o",
-    LLMProvider.ANTHROPIC: "claude-3-7-sonnet-20250219",
-}
-
-# Map providers to their environment variable names
-ENV_VARS = {
-    LLMProvider.OPENAI: "OPENAI_API_KEY",
-    LLMProvider.ANTHROPIC: "ANTHROPIC_API_KEY",
-}
 
 
 class ComputerAgent:
@@ -98,35 +84,27 @@ class ComputerAgent:
                     f"No model specified for provider {self.provider} and no default found"
                 )
 
-        # Ensure computer is properly cast for typing purposes
-        computer_instance = self.computer
-
         # Get API key from environment if not provided
         actual_api_key = api_key or os.environ.get(ENV_VARS[self.provider], "")
         if not actual_api_key:
             raise ValueError(f"No API key provided for {self.provider}")
 
-        # Initialize the appropriate loop based on the loop parameter
-        if loop == AgentLoop.ANTHROPIC:
-            self._loop = AnthropicLoop(
-                api_key=actual_api_key,
-                model=actual_model_name,
-                computer=computer_instance,
-                save_trajectory=save_trajectory,
-                base_dir=trajectory_dir,
-                only_n_most_recent_images=only_n_most_recent_images,
-            )
-        else:
-            self._loop = OmniLoop(
+        # Create the appropriate loop using the factory
+        try:
+            # Let the factory create the appropriate loop with needed components
+            self._loop = LoopFactory.create_loop(
+                loop_type=loop,
                 provider=self.provider,
+                computer=self.computer,
+                model_name=actual_model_name,
                 api_key=actual_api_key,
-                model=actual_model_name,
-                computer=computer_instance,
                 save_trajectory=save_trajectory,
-                base_dir=trajectory_dir,
+                trajectory_dir=trajectory_dir,
                 only_n_most_recent_images=only_n_most_recent_images,
-                parser=OmniParser(),
             )
+        except ValueError as e:
+            logger.error(f"Failed to create loop: {str(e)}")
+            raise
 
         # Initialize the message manager from the loop
         self.message_manager = self._loop.message_manager
@@ -152,21 +130,6 @@ class ComputerAgent:
             else:
                 logger.info("Computer already initialized, skipping initialization")
 
-            # Take a test screenshot to verify the computer is working
-            logger.info("Testing computer with a screenshot...")
-            try:
-                test_screenshot = await self.computer.interface.screenshot()
-                # Determine the screenshot size based on its type
-                if isinstance(test_screenshot, (bytes, bytearray, memoryview)):
-                    size = len(test_screenshot)
-                elif hasattr(test_screenshot, "base64_image"):
-                    size = len(test_screenshot.base64_image)
-                else:
-                    size = "unknown"
-                logger.info(f"Screenshot test successful, size: {size}")
-            except Exception as e:
-                logger.error(f"Screenshot test failed: {str(e)}")
-                # Even though screenshot failed, we continue since some tests might not need it
         except Exception as e:
             logger.error(f"Error initializing computer in __aenter__: {str(e)}")
             raise
@@ -232,7 +195,6 @@ class ComputerAgent:
 
             # Execute the task and yield results
             async for result in self._loop.run(self.message_manager.messages):
-                # Yield the result to the caller
                 yield result
 
         except Exception as e:

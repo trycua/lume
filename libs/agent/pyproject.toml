@@ -30,6 +30,10 @@ anthropic = [
     "anthropic>=0.49.0",
     "boto3>=1.35.81,<2.0.0",
 ]
+openai = [
+    "openai>=1.14.0,<2.0.0",
+    "httpx>=0.27.0,<0.29.0",
+]
 som = [
     "torch>=2.2.1",
     "torchvision>=0.17.1",

@@ -1,6 +1,16 @@
 """Core type definitions."""
 
 from typing import Any, Dict, List, Optional, TypedDict, Union
+from enum import Enum, auto
+
+
+class AgentLoop(Enum):
+    """Enumeration of available loop types."""
+
+    ANTHROPIC = auto()  # Anthropic implementation
+    OMNI = auto()  # OmniLoop implementation
+    OPENAI = auto()  # OpenAI implementation
+    # Add more loop types as needed
 
 
 class AgentResponse(TypedDict, total=False):

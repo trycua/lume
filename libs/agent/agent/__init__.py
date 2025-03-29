@@ -49,7 +49,7 @@ except Exception as e:
     logger.warning(f"Error initializing telemetry: {e}")
 
 from .providers.omni.types import LLMProvider, LLM
-from .core.loop import AgentLoop
-from .core.computer_agent import ComputerAgent
+from .core.factory import AgentLoop
+from .core.agent import ComputerAgent
 
 __all__ = ["AgentLoop", "LLMProvider", "LLM", "ComputerAgent"]

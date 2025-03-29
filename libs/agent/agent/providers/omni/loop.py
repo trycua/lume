@@ -10,7 +10,7 @@ from httpx import ConnectError, ReadTimeout
 from typing import cast
 
 from .parser import OmniParser, ParseResult
-from ...core.loop import BaseLoop
+from ...core.base import BaseLoop
 from ...core.visualization import VisualizationHelper
 from ...core.messages import StandardMessageManager, ImageRetentionConfig
 from .utils import to_openai_agent_response_format
